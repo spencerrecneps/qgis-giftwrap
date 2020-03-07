@@ -219,9 +219,9 @@ class GiftWrap:
             filter=self.tr("Zip files (*.zip)")
         )
 
-        if filename:
+        if filename[0]:
             current_project = QgsProject.instance()
-            current_project.write(filename)
+            current_project.write(filename[0])
 
 
 
