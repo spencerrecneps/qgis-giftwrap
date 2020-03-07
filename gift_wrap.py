@@ -21,14 +21,15 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QStandardPaths
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QFileDialog
+from qgis.core import QgsProject
 
 # Initialize Qt resources from file resources.py
-from .resources import *
+# from .resources import *
 # Import the code for the dialog
-from .gift_wrap_dialog import GiftWrapDialog
+# from .gift_wrap_dialog import GiftWrapDialog
 import os.path
 
 
@@ -52,7 +53,8 @@ class GiftWrap:
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
-            'GiftWrap_{}.qm'.format(locale))
+            'GiftWrap_{}.qm'.format(locale)
+        )
 
         if os.path.exists(locale_path):
             self.translator = QTranslator()
@@ -66,6 +68,7 @@ class GiftWrap:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -151,11 +154,13 @@ class GiftWrap:
         if add_to_menu:
             self.iface.addPluginToMenu(
                 self.menu,
-                action)
+                action
+            )
 
         self.actions.append(action)
 
         return action
+
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
@@ -165,7 +170,8 @@ class GiftWrap:
             icon_path,
             text=self.tr(u'Gift Wrap'),
             callback=self.run,
-            parent=self.iface.mainWindow())
+            parent=self.iface.mainWindow()
+        )
 
         # will be set False in run()
         self.first_start = True
@@ -176,7 +182,8 @@ class GiftWrap:
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&Gift Wrap'),
-                action)
+                action
+            )
             self.iface.removeToolBarIcon(action)
 
 
@@ -185,16 +192,46 @@ class GiftWrap:
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
-            self.first_start = False
-            self.dlg = GiftWrapDialog()
+        # if self.first_start == True:
+        #     self.first_start = False
+        #     self.dlg = QFileDialog.getSaveFileName(
+        #         parent=None,
+        #         caption=self.tr("Choose a save location"),
+        #         filter=self.tr("Zip files (*.zip)")
+        #     )
+        #         # directory=QStandardPaths.HomeLocation,
+        #     # self.dlg = GiftWrapDialog()
+        #
+        # # show the dialog
+        # self.dlg.show()
+        # # Run the dialog event loop
+        # result = self.dlg.exec_()
+        # # See if OK was pressed
+        # if result:
+        #     # Do something useful here - delete the line containing pass and
+        #     # substitute with your code.
+        #     pass
 
-        # show the dialog
-        self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
-        if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
+        filename = QFileDialog.getSaveFileName(
+            parent=None,
+            directory=QStandardPaths.writableLocation(QStandardPaths.HomeLocation),
+            caption=self.tr("Choose a save location"),
+            filter=self.tr("Zip files (*.zip)")
+        )
+
+        if filename:
+            current_project = QgsProject.instance()
+            current_project.write(filename)
+
+
+
+    def export_all_layers(self,save_dir):
+        """
+        Loop through all layers and export to geopackage
+
+        :param save_dir: Directory to save geopackage to
+        :type str
+
+        :returns: File path to the exported geopackage
+        """
+        pass
